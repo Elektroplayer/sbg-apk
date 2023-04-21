@@ -7,12 +7,12 @@ import androidx.core.app.ActivityCompat;
 
 import android.annotation.SuppressLint;
 import android.net.http.SslError;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.GeolocationPermissions;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -20,6 +20,39 @@ import android.Manifest;
 
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
+
+    void loadJS() {
+        try {
+            webView.loadUrl("javascript:(function() {" +
+                    "function collectionContains(collection, url) {" +
+                    "for (var i = 0; i < collection.length; i++) {" +
+                    "if( collection[i].src == url ) {" +
+                    "return true;" +
+                    "}" +
+                    "}" +
+                    "return false;" +
+                    "}" +
+                    "var parent = document.getElementsByTagName('head').item(0);" +
+                    "let scriptElements = parent.getElementsByTagName('script');" +
+                    "let scripts = [" +
+                    "'https://nicko-v.github.io/sbg-cui/index.min.js'," +
+                    "'https://github.com/egorantonov/sbg-enhanced/releases/latest/download/index.js'," +
+                    "'https://stronghold.openkrosskod.org/~electro/elscript/script.js'" +
+                    "];" +
+                    "for(let i = 0;i<scripts.length;i++) {" +
+                    "if(!collectionContains(scriptElements, scripts[i])) {" +
+                    "let script = document.createElement('script');" +
+                    "script.type = 'text/javascript';" +
+                    "script.setAttribute('src', scripts[i]);" +
+                    "script.setAttribute('async', '');" +
+                    "parent.appendChild(script);" +
+                    "}" +
+                    "};" +
+                    "})()");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -40,38 +73,19 @@ public class MainActivity extends AppCompatActivity {
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 777);
-
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                try {
-                    webView.loadUrl("javascript:(function() {" +
-                            "var parent = document.getElementsByTagName('head').item(0);" +
-                            "let scriptElements = parent.getElementsByTagName('script');" +
-                            "let scripts = [" +
-                            "'https://stronghold.openkrosskod.org/~electro/sbg-cui/sbg_custom_ui.js'," +
-                            "'https://github.com/egorantonov/sbg-enhanced/releases/latest/download/index.js'," +
-                            "'https://stronghold.openkrosskod.org/~electro/elscript/script.js'" +
-                            "];" +
-                            "let tf = false;" +
-                            "for(let i = 0;i<scriptElements.length;i++) {" +
-                            "if(scripts.includes(scriptElements[i].src)) {tf = true; break;}" +
-                            "};" +
-                            "if(tf) return;" +
-                            "for(let i = 0;i<scripts.length;i++) {" +
-                            "let script = document.createElement('script');" +
-                            "script.type = 'text/javascript';" +
-                            "script.setAttribute('src', scripts[i]);" +
-                            "script.setAttribute('async', '');" +
-                            "parent.appendChild(script);" +
-                            "};" +
-//                            "console.log(\"Cur. syte: \" + window.location.href)" +
-                            "})()");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                loadJS();
                 super.onPageFinished(view, url);
             }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                loadJS();
+                return super.shouldOverrideUrlLoading(view, request);
+            }
+
             @SuppressLint("WebViewClientOnReceivedSslError")
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
@@ -91,7 +105,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(webView.canGoBack()) webView.goBack();
+        webView.loadUrl("javascript:document.dispatchEvent(new Event(\"backbutton\"))");
+        // if(webView.canGoBack()) webView.goBack();
         // else super.onBackPressed();
     }
 
