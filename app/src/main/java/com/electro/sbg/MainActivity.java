@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
                 // Загружает скрипты, когда видит напечатанную версию в консоли
-                if(Pattern.matches("(\\d+\\.)(\\d+\\.)(\\*|\\d+)", consoleMessage.message())) loadJS();
+                if(Pattern.matches("^(\\d+\\.)(\\d+\\.)(\\*|\\d+)$", consoleMessage.message())) loadJS();
                 return super.onConsoleMessage(consoleMessage);
             }
         });
