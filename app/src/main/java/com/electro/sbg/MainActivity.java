@@ -9,6 +9,7 @@ import android.annotation.SuppressLint;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
@@ -17,6 +18,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.Manifest;
+
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
@@ -32,19 +35,20 @@ public class MainActivity extends AppCompatActivity {
                     "}" +
                     "return false;" +
                     "}" +
-                    "var parent = document.getElementsByTagName('head').item(0);" +
+                    "" +
+                    "var parent = document.getElementsByTagName('body').item(0);" +
                     "let scriptElements = parent.getElementsByTagName('script');" +
                     "let scripts = [" +
                     "'https://nicko-v.github.io/sbg-cui/index.min.js'," +
                     "'https://github.com/egorantonov/sbg-enhanced/releases/latest/download/index.js'," +
-                    "'https://stronghold.openkrosskod.org/~electro/elscript/script.js'" +
+                    // "'https://stronghold.openkrosskod.org/~electro/elscript/script.js'" +
                     "];" +
                     "for(let i = 0;i<scripts.length;i++) {" +
                     "if(!collectionContains(scriptElements, scripts[i])) {" +
                     "let script = document.createElement('script');" +
                     "script.type = 'text/javascript';" +
-                    "script.setAttribute('src', scripts[i]);" +
                     "script.setAttribute('async', '');" +
+                    "script.setAttribute('src', scripts[i]);" +
                     "parent.appendChild(script);" +
                     "}" +
                     "};" +
@@ -74,17 +78,17 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 777);
         webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                loadJS();
-                super.onPageFinished(view, url);
-            }
+//            @Override
+//            public void onPageFinished(WebView view, String url) {
+//                loadJS();
+//                super.onPageFinished(view, url);
+//            }
 
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                loadJS();
-                return super.shouldOverrideUrlLoading(view, request);
-            }
+//            @Override
+//            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+//                loadJS();
+//                return super.shouldOverrideUrlLoading(view, request);
+//            }
 
             @SuppressLint("WebViewClientOnReceivedSslError")
             @Override
@@ -97,6 +101,13 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new WebChromeClient() {
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
+            }
+
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                // Загружает скрипты, когда видит напечатанную версию в консоли
+                if(Pattern.matches("(\\d+\\.)(\\d+\\.)(\\*|\\d+)", consoleMessage.message())) loadJS();
+                return super.onConsoleMessage(consoleMessage);
             }
         });
 
