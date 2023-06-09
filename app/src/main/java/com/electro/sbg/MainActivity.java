@@ -6,53 +6,30 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.View;
-import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.Manifest;
 
-import java.util.regex.Pattern;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
+    private String Script = "";
 
     void loadJS() {
         try {
-            webView.loadUrl("javascript:(function() {" +
-                    "function collectionContains(collection, url) {" +
-                    "for (var i = 0; i < collection.length; i++) {" +
-                    "if( collection[i].src == url ) {" +
-                    "return true;" +
-                    "}" +
-                    "}" +
-                    "return false;" +
-                    "}" +
-                    "" +
-                    "var parent = document.getElementsByTagName('body').item(0);" +
-                    "let scriptElements = parent.getElementsByTagName('script');" +
-                    "let scripts = [" +
-                    "'https://nicko-v.github.io/sbg-cui/index.min.js'," +
-                    "'https://github.com/egorantonov/sbg-enhanced/releases/latest/download/index.js'," +
-                    // "'https://stronghold.openkrosskod.org/~electro/elscript/script.js'" +
-                    "];" +
-                    "for(let i = 0;i<scripts.length;i++) {" +
-                    "if(!collectionContains(scriptElements, scripts[i])) {" +
-                    "let script = document.createElement('script');" +
-                    "script.type = 'text/javascript';" +
-                    "script.setAttribute('async', '');" +
-                    "script.setAttribute('src', scripts[i]);" +
-                    "parent.appendChild(script);" +
-                    "}" +
-                    "};" +
-                    "})()");
+            webView.loadUrl("javascript:(function () {\n\n" + Script + "\n})()");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -63,6 +40,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        try {
+            Script = "";
+            URL url = new URL("https://raw.githubusercontent.com/nicko-v/sbg-cui/main/index.min.js");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if(!line.startsWith("//")) Script += line + "\n";
+            }
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         webView = findViewById(R.id.webview);
 
@@ -78,17 +71,11 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 777);
         webView.setWebViewClient(new WebViewClient() {
-//            @Override
-//            public void onPageFinished(WebView view, String url) {
-//                loadJS();
-//                super.onPageFinished(view, url);
-//            }
-
-//            @Override
-//            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-//                loadJS();
-//                return super.shouldOverrideUrlLoading(view, request);
-//            }
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                loadJS();
+                super.onPageStarted(view, url, favicon);
+            }
 
             @SuppressLint("WebViewClientOnReceivedSslError")
             @Override
@@ -101,13 +88,6 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new WebChromeClient() {
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
-            }
-
-            @Override
-            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                // Загружает скрипты, когда видит напечатанную версию в консоли
-                if(Pattern.matches("^(\\d+\\.)(\\d+\\.)(\\*|\\d+)$", consoleMessage.message())) loadJS();
-                return super.onConsoleMessage(consoleMessage);
             }
         });
 
