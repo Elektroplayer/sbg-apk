@@ -1,5 +1,8 @@
 package com.electro.sbg;
 
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,16 +23,47 @@ import android.webkit.WebViewClient;
 import android.Manifest;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.sql.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
-    private String Script = "";
+    private List<String> scripts = new ArrayList<>();
+    private String kolyaScript;
+    private String egorScript;
 
-    void loadJS() {
+    String getScript(String link) {
+        String script = "";
+
         try {
-            webView.loadUrl("javascript:(function () {\n\n" + Script + "\n})()");
+            URL url = new URL(link);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if(!line.startsWith("//")) script += line + "\n";
+            }
+
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return script;
+    }
+
+    void loadScript(String script) {
+        try {
+            webView.loadUrl("javascript:(function () {\n\n" + script + "\n})()");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -44,18 +78,10 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        try {
-            Script = "";
-            URL url = new URL("https://raw.githubusercontent.com/nicko-v/sbg-cui/main/index.min.js");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if(!line.startsWith("//")) Script += line + "\n";
-            }
-            reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 777);
+
+        kolyaScript = getScript("https://raw.githubusercontent.com/nicko-v/sbg-cui/main/index.min.js");
+        egorScript = getScript("https://github.com/egorantonov/sbg-enhanced/releases/download/2.0.2/index.js");
 
         webView = findViewById(R.id.webview);
 
@@ -69,11 +95,13 @@ public class MainActivity extends AppCompatActivity {
 
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 777);
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                loadJS();
+                System.out.println(url);
+                if(!Objects.equals(url, "https://3d.sytes.net/")) return;
+                loadScript(kolyaScript);
+                loadScript(egorScript);
                 super.onPageStarted(view, url, favicon);
             }
 
