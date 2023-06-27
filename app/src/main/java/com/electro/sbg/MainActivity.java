@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 777);
 
         kolyaScript = getScript("https://raw.githubusercontent.com/nicko-v/sbg-cui/main/index.min.js");
-        egorScript = getScript("https://github.com/egorantonov/sbg-enhanced/releases/download/2.0.2/index.js");
+        egorScript = getScript("https://github.com/egorantonov/sbg-enhanced/releases/latest/download/index.js");
 
         webView = findViewById(R.id.webview);
 
@@ -100,8 +100,8 @@ public class MainActivity extends AppCompatActivity {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 System.out.println(url);
                 if(!Objects.equals(url, "https://3d.sytes.net/")) return;
-                loadScript(kolyaScript);
-                loadScript(egorScript);
+                // loadScript(kolyaScript);
+                // loadScript(egorScript);
                 super.onPageStarted(view, url, favicon);
             }
 
