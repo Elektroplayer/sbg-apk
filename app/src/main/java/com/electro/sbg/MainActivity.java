@@ -99,9 +99,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 System.out.println(url);
-                if(!Objects.equals(url, "https://3d.sytes.net/")) return;
-                // loadScript(kolyaScript);
-                // loadScript(egorScript);
+                if(!url.startsWith("https://3d.sytes.net")) return;
+                loadScript(kolyaScript);
+                loadScript(egorScript);
                 super.onPageStarted(view, url, favicon);
             }
 
