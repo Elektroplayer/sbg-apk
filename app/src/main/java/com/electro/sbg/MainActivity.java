@@ -73,6 +73,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    void blockScript(String link) {
+        loadScript("((append) => { Element.prototype.append = function() { if (arguments.length === 0) { return } if (arguments[0].src == '" + link + "') { Array.prototype.shift.apply(arguments); } append.apply(this, arguments); }; })(Element.prototype.append);");
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -104,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 System.out.println(url);
                 if(!url.startsWith("https://3d.sytes.net")) return;
+                blockScript("https://3d.sytes.net/script.js");
                 loadScript(kolyaScript);
                 loadScript(egorScript);
                 super.onPageStarted(view, url, favicon);
