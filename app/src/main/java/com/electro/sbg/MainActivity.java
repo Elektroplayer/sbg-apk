@@ -61,6 +61,10 @@ public class MainActivity extends AppCompatActivity {
         return script;
     }
 
+    String fetchScript(String link) {
+        return "fetch('" + link + "').then(r => r.text()).then(data => { const script = document.createElement('script'); script.textContent = data; document.head.appendChild(script); });";
+    }
+
     void loadScript(String script) {
         try {
             webView.loadUrl("javascript:(function () {\n\n" + script + "\n})()");
@@ -80,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 777);
 
-        kolyaScript = getScript("https://raw.githubusercontent.com/nicko-v/sbg-cui/main/index.min.js");
+        kolyaScript = fetchScript("https://raw.githubusercontent.com/nicko-v/sbg-cui/main/index.js");
         egorScript = getScript("https://github.com/egorantonov/sbg-enhanced/releases/latest/download/index.js");
 
         webView = findViewById(R.id.webview);
